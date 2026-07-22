@@ -68,14 +68,11 @@ class TrainingRace(Scene):
             axis_config={"color": OFFWHITE, "stroke_width": 2, "include_tip": False, "include_ticks": False},
         ).shift(DOWN * 0.35)
 
-        x_label = Text("Training progress →", font_size=20, color=OFFWHITE).next_to(axes.x_axis, DOWN, buff=0.3)
+        x_label = Text("Training Progress", font_size=20, color=OFFWHITE).next_to(axes.x_axis, DOWN, buff=0.3)
         y_label = Text("Prediction error", font_size=20, color=OFFWHITE).rotate(90 * DEGREES)
         y_label.next_to(axes.y_axis, LEFT, buff=0.25)
-        high_label = Text("High", font_size=16, color=GREY_TEXT).next_to(axes.c2p(0, y_span), RIGHT, buff=0.2)
-        low_label = Text("Low", font_size=16, color=GREY_TEXT).next_to(axes.c2p(0, 0), RIGHT, buff=0.2)
 
-        self.play(Create(axes), FadeIn(x_label), FadeIn(y_label), FadeIn(high_label), FadeIn(low_label),
-                  run_time=1.0)
+        self.play(Create(axes), FadeIn(x_label), FadeIn(y_label), run_time=1.0)
 
         mlp_points = [axes.c2p(e, l) for e, l in zip(epochs, shifted_mlp)]
         kan_points = [axes.c2p(e, l) for e, l in zip(epochs, shifted_kan)]
@@ -93,10 +90,6 @@ class TrainingRace(Scene):
         mlp_label = Text("MLP", font_size=26, color=MLP_BLUE, weight=BOLD).next_to(mlp_points[-1], UP, buff=0.25)
         kan_label = Text("KAN", font_size=26, color=KAN_ORANGE, weight=BOLD).next_to(kan_points[-1], DOWN, buff=0.3)
         self.play(FadeIn(mlp_label, shift=DOWN * 0.1), FadeIn(kan_label, shift=UP * 0.1), run_time=0.6)
-
-        caption = Text("Same size. KAN ends up more accurate.", font_size=24, color=OFFWHITE)
-        caption.to_edge(DOWN, buff=0.4)
-        self.play(FadeIn(caption, shift=UP * 0.2), run_time=0.6)
         self.wait(1.8)
 
 
@@ -104,11 +97,10 @@ class CostVsAccuracy(Scene):
     def construct(self):
         self.camera.background_color = NEAR_BLACK
 
-        title = Text("Same Size. Very Different Cost.", font_size=34, color=OFFWHITE, weight=BOLD)
+        title = Text("Prediction Error vs Training Time (5 runs each)",
+                    font_size=30, color=OFFWHITE, weight=BOLD)
         title.to_edge(UP, buff=0.5)
-        subtitle = Text("Training time vs. final prediction error, 5 runs each",
-                        font_size=20, color=GREY_TEXT).next_to(title, DOWN, buff=0.15)
-        self.play(FadeIn(title, shift=DOWN * 0.2), FadeIn(subtitle), run_time=1.0)
+        self.play(FadeIn(title, shift=DOWN * 0.2), run_time=1.0)
 
         mlp_runs, kan_runs = PAYLOAD["results"]["mlp"], PAYLOAD["results"]["kan"]
         mlp_times = np.array([r["wall_time"] for r in mlp_runs])
@@ -127,21 +119,15 @@ class CostVsAccuracy(Scene):
             x_range=[0, x_max, x_max / 5],
             y_range=[0, y_span, y_span / 4],
             x_length=10, y_length=5,
-            axis_config={"color": OFFWHITE, "stroke_width": 2, "include_tip": False},
-            x_axis_config={"include_ticks": True, "include_numbers": True, "font_size": 20,
-                          "decimal_number_config": {"num_decimal_places": 0}},
-            y_axis_config={"include_ticks": False, "include_numbers": False},
-        ).shift(DOWN * 0.35)
+            axis_config={"color": OFFWHITE, "stroke_width": 2, "include_tip": False, "include_ticks": False},
+        ).shift(DOWN * 0.05)
 
-        x_label = Text("Training time (seconds) →", font_size=20, color=OFFWHITE)
-        x_label.next_to(axes.x_axis, DOWN, buff=0.55)
+        x_label = Text("Training Time [s]", font_size=20, color=OFFWHITE)
+        x_label.next_to(axes.x_axis, DOWN, buff=0.3)
         y_label = Text("Prediction error", font_size=20, color=OFFWHITE).rotate(90 * DEGREES)
         y_label.next_to(axes.y_axis, LEFT, buff=0.25)
-        high_label = Text("Less accurate", font_size=16, color=GREY_TEXT).next_to(axes.c2p(0, y_span), RIGHT, buff=0.2)
-        low_label = Text("More accurate", font_size=16, color=GREY_TEXT).next_to(axes.c2p(0, 0), RIGHT, buff=0.2)
 
-        self.play(Create(axes), FadeIn(x_label), FadeIn(y_label), FadeIn(high_label), FadeIn(low_label),
-                  run_time=1.0)
+        self.play(Create(axes), FadeIn(x_label), FadeIn(y_label), run_time=1.0)
 
         mlp_dots = VGroup(*[Dot(axes.c2p(tm, e), color=MLP_BLUE, radius=0.1)
                             for tm, e in zip(mlp_times, shifted_mlp_errs)])
