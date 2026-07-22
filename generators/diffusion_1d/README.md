@@ -19,9 +19,9 @@ charging**:
 
 **Boundary conditions**
 - `x = 0` (surface): a constant applied flux models the lithium-insertion
-  current during charging — `-D * dc/dx|_{x=0} = J_surface`
-- `x = L` (particle interior): zero-flux / symmetry — lithium cannot leave
-  through this side — `dc/dx|_{x=L} = 0`
+  current during charging - `-D * dc/dx|_{x=0} = J_surface`
+- `x = L` (particle interior): zero-flux / symmetry - lithium cannot leave
+  through this side - `dc/dx|_{x=L} = 0`
 
 **Initial condition**: `c(x, 0) = c0` (uniform initial lithiation).
 
@@ -48,18 +48,18 @@ python generate.py --D 2e-14 --t_end 600         # override any parameter
 ```
 
 Every field of `DiffusionParams` is a CLI flag. Outputs (`outputs/`):
-- `diffusion_1d_solution.npz` — the solution grid (`x`, `t`, `C`) plus the
+- `diffusion_1d_solution.npz` - the solution grid (`x`, `t`, `C`) plus the
   physical parameters used to produce it
-- `diffusion_1d_params.json` — the same parameters, human-readable
-- `diffusion_1d_solution.png` — a 3D surface + top-down heatmap of `c(x,t)`
+- `diffusion_1d_params.json` - the same parameters, human-readable
+- `diffusion_1d_solution.png` - a 3D surface + top-down heatmap of `c(x,t)`
 
 A built-in sanity check integrates the PDE's exact mass-balance invariant
 (total lithium inserted must equal `J * T`) and reports the relative error
-— with the default grid this comes out at machine precision (~1e-12).
+- with the default grid this comes out at machine precision (~1e-12).
 
 ## Reuse in an experiment
 
-Experiments don't call `python generate.py` directly — they import
+Experiments don't call `python generate.py` directly - they import
 `DiffusionParams` and `solve_diffusion_1d` and pass in whatever physical
 parameters their own `config.yaml` specifies (see
 `experiments/kan_vs_mlp_battery_diffusion/`), so this generator can serve

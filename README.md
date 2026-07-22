@@ -3,7 +3,7 @@
 Science_ML is a collection of lesser-known neural architectures paired with
 synthetic data generators built from differential equations, for honest,
 fully reproducible scientific experimentation. Every experiment states its
-physical setup, its exact hyperparameters, and its finding — including
+physical setup, its exact hyperparameters, and its finding - including
 where the "interesting" architecture loses, not just where it wins.
 
 ## Structure
@@ -14,13 +14,13 @@ models/         architecture implementations, one per folder
 experiments/    each experiment combines a generator + one or more models
 ```
 
-- **`generators/<name>/`** — `generate.py`, a `README.md` explaining the
+- **`generators/<name>/`** - `generate.py`, a `README.md` explaining the
   equation and its physical meaning, and an `outputs/` folder with the
   reference solution.
-- **`models/<name>/`** — the architecture's implementation and a short
+- **`models/<name>/`** - the architecture's implementation and a short
   `README.md`.
-- **`experiments/<name>/`** — `run.py` (single entry point, runnable end to
-  end), `config.yaml` (every reproducible parameter — physical constants,
+- **`experiments/<name>/`** - `run.py` (single entry point, runnable end to
+  end), `config.yaml` (every reproducible parameter - physical constants,
   seeds, architecture sizes), a `README.md` with the finding and how to
   reproduce it, and `outputs/`, `checkpoints/`, `media/` for the results.
 
@@ -28,7 +28,7 @@ experiments/    each experiment combines a generator + one or more models
 
 | Experiment | Question | Finding |
 |---|---|---|
-| [`kan_vs_mlp_battery_diffusion`](experiments/kan_vs_mlp_battery_diffusion/) | Can a KAN solve a PDE as a physics-informed network as well as an MLP with the same parameter budget? | KAN is ~1.6x more accurate, consistently across 5 seeds — but ~16x slower to train. |
+| [`kan_vs_mlp_battery_diffusion`](experiments/kan_vs_mlp_battery_diffusion/) | Can a KAN solve a PDE as a physics-informed network as well as an MLP with the same parameter budget? | KAN is ~1.6x more accurate, consistently across 5 seeds - but ~16x slower to train. |
 
 ## Generators
 
@@ -40,7 +40,7 @@ experiments/    each experiment combines a generator + one or more models
 
 | Model | What it is |
 |---|---|
-| [`kan`](models/kan/) | Kolmogorov-Arnold Network — learnable spline functions on every edge instead of fixed activations |
+| [`kan`](models/kan/) | Kolmogorov-Arnold Network - learnable spline functions on every edge instead of fixed activations |
 | [`mlp`](models/mlp/) | Standard feedforward baseline |
 
 ## Setup
@@ -51,5 +51,5 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Then `cd` into an experiment folder and run its `run.py` — see that
+Then `cd` into an experiment folder and run its `run.py` - see that
 experiment's own `README.md` for expected runtime and what it produces.

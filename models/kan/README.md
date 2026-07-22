@@ -1,4 +1,4 @@
-# KAN — Kolmogorov-Arnold Network
+# KAN - Kolmogorov-Arnold Network
 
 A minimal, self-contained implementation (~100 lines, `kan.py`) of a
 Kolmogorov-Arnold Network. No `pykan` / `efficient-kan` dependency, so the
@@ -19,7 +19,7 @@ residual `w_base * SiLU(x)` term is what makes the layer trainable by plain
 backprop from a generic initialization (Liu et al. 2024, eq. 2.10).
 
 A `KANLinear(in_features, out_features, grid_size=G, spline_order=k)` layer
-has exactly `in_features * out_features * (1 + G + k)` parameters — one
+has exactly `in_features * out_features * (1 + G + k)` parameters - one
 base weight plus `G + k` spline coefficients per edge. No separate
 activation function sits between KAN layers; the nonlinearity already lives
 on every edge.
