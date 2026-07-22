@@ -10,3 +10,6 @@ __pycache__/
 checkpoints/
 *.pt
 **/manim_data/
+
+# local-only social-media assets (e.g. Substack) -- kept on disk, never pushed
+**/socials/
