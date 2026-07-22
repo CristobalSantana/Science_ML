@@ -1,0 +1,6 @@
+numpy>=1.24
+scipy>=1.10
+matplotlib>=3.7
+torch>=2.2   # CPU is enough and deliberately used for training determinism
+pandas>=2.0  # comparison-table aggregation/export only
+pyyaml>=6.0  # experiments/*/config.yaml parsing

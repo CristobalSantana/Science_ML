@@ -1,0 +1,40 @@
+# Reproducible configuration for the KAN vs MLP battery-diffusion experiment.
+# Every physical constant, architecture choice, and training hyperparameter
+# used to produce outputs/, checkpoints/, and media/ lives here -- nothing
+# reproducible is hardcoded in run.py. Change a value and rerun `run.py` to
+# reproduce a different variant of the same experiment.
+
+# --- physics: passed straight to generators/diffusion_1d/generate.py ---
+physics:
+  D: 4.0e-14              # diffusion coefficient [m^2/s]
+  L: 6.0e-6                # domain length [m] (electrode particle "radius", 1D planar approx)
+  c0: 15000.0                # initial uniform concentration [mol/m^3]
+  surface_flux: 2.5e-5         # applied flux at x=0 [mol/(m^2 s)]
+  t_end: 1200.0                  # total simulated time [s]
+  nx: 161                          # spatial grid points (reference solution)
+  nt: 800                            # time steps (reference solution)
+
+# --- architectures: passed to models/mlp/mlp.py and models/kan/kan.py ---
+architectures:
+  mlp:
+    layers: [2, 20, 20, 20, 1]     # tanh activations; 921 parameters
+  kan:
+    layers: [2, 6, 6, 6, 1]
+    grid_size: 6
+    spline_order: 3                 # cubic B-splines; 900 parameters
+
+# --- training: the physics-informed loss and optimization loop ---
+training:
+  seeds: [0, 1, 2, 3, 4]            # each seed reseeds BOTH the shared
+                                     # collocation points and each model's
+                                     # own initialization -- see run.py
+  n_epochs: 3000
+  learning_rate: 0.001
+  log_every: 100                    # checkpoint cadence for loss/error curves
+  collocation_points:
+    pde: 2000
+    bc: 200
+    ic: 200
+  device: cpu                       # CPU is deliberately used for determinism
+                                     # (no CUDA nondeterminism to manage); these
+                                     # tiny networks don't need a GPU

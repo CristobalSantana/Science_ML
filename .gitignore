@@ -1,0 +1,12 @@
+# environments
+.venv/
+__pycache__/
+*.pyc
+
+# heavy, regenerable files -- rerun the experiment's run.py to reproduce.
+# Reference outputs (generators/*/outputs/) and all figures/tables/media
+# in experiments/*/outputs/ and experiments/*/media/ are intentionally
+# KEPT in git.
+checkpoints/
+*.pt
+**/manim_data/
