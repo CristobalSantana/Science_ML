@@ -2,15 +2,19 @@
 manim_figures.py -- Professional, equation-free animations of the Phase 3
 KAN vs MLP comparison, for a non-academic audience.
 
-Reads plain numpy/json data only (outputs/phase3_results.json and
-outputs/manim_data/solution_fit_dense.npz) -- no torch import here, so
-this can run in a separate, lighter virtual environment than the one
-used to train the models.
+Reads plain numpy/json data only (outputs/phase3_results.json,
+outputs/manim_data/solution_fit_dense.npz, and the generator's own
+reference solution) -- no torch import here, so this can run in a
+separate, lighter virtual environment than the one used to train the
+models.
 
-Three scenes, one per empirical finding:
+Four scenes:
   TrainingRace      -- both models' prediction error falling during training
   CostVsAccuracy    -- training time vs. final error, 5 runs each
   RealityCheck      -- predicted vs. real battery-charging curve, over time
+  ParticleFilling   -- the ground-truth physics itself: how lithium fills
+                        the electrode particle, straight from the
+                        generator's reference solution (no ML involved)
 """
 
 from __future__ import annotations
@@ -30,6 +34,9 @@ GREY_TEXT = "#9a9a9a"
 DATA_DIR = Path(__file__).parent / "outputs"
 with open(DATA_DIR / "phase3_results.json") as f:
     PAYLOAD = json.load(f)
+
+SCIENCE_ML_ROOT = Path(__file__).resolve().parents[2]
+REFERENCE_NPZ = SCIENCE_ML_ROOT / "generators" / "diffusion_1d" / "outputs" / "diffusion_1d_solution.npz"
 
 
 def curve_arrays(payload, arch, key):
@@ -225,3 +232,139 @@ class RealityCheck(Scene):
                        font_size=23, color=OFFWHITE).to_edge(DOWN, buff=0.4)
         self.play(FadeIn(caption, shift=UP * 0.2), run_time=0.7)
         self.wait(1.8)
+
+
+class ParticleFilling(Scene):
+    """The ground-truth physics itself, straight from the finite-difference
+    reference solution -- no neural networks involved. Two synchronized
+    panels: a particle cross-section filling with concentration from the
+    surface inward (the real 1D solution mapped radially outside-in for an
+    intuitive "cross-section" visual), and the matching concentration
+    profile as a line plot, so the viewer sees the curve's tilt and the
+    particle's uneven fill are the same fact shown two ways.
+    """
+
+    def construct(self):
+        self.camera.background_color = NEAR_BLACK
+
+        data = np.load(REFERENCE_NPZ)
+        x, t, C = data["x"], data["t"], data["C"]
+        t_end = float(t.max())
+        c_min, c_max = float(C.min()), float(C.max())
+        x_hat_grid = x / float(x.max())   # 0 (surface) .. 1 (center)
+        n_t = len(t)
+
+        def c_at(time_frac: float) -> np.ndarray:
+            """Interpolated concentration profile (nx,) at dimensionless time_frac in [0,1]."""
+            idx_f = time_frac * (n_t - 1)
+            i0 = int(np.floor(idx_f))
+            i1 = min(i0 + 1, n_t - 1)
+            w = idx_f - i0
+            return C[i0] * (1 - w) + C[i1] * w
+
+        title = Text("How Lithium Fills the Particle", font_size=34, color=OFFWHITE, weight=BOLD)
+        title.to_edge(UP, buff=0.4)
+        self.play(FadeIn(title, shift=DOWN * 0.2), run_time=0.8)
+
+        # ---------------- left panel: particle cross-section ----------------
+        circle_center = np.array([-3.6, -0.5, 0])
+        radius = 2.0
+        img_res = 400
+        LOW_RGB = np.array([55, 50, 48])     # dim, "unlit" -- low concentration
+        HIGH_RGB = np.array([255, 83, 0])    # KAN_ORANGE -- high concentration
+        BG_RGB = np.array([14, 14, 14])      # matches NEAR_BLACK exactly
+
+        time_tracker = ValueTracker(0.0)     # 0..1 dimensionless time, 0..t_end
+        marker_x = ValueTracker(0.0)         # 0 (surface) .. 1 (center)
+
+        def particle_array(time_frac: float) -> np.ndarray:
+            c_norm = np.clip((c_at(time_frac) - c_min) / (c_max - c_min), 0, 1)
+            yy, xx = np.mgrid[0:img_res, 0:img_res]
+            c0 = (img_res - 1) / 2
+            r = np.sqrt((xx - c0) ** 2 + (yy - c0) ** 2) / (img_res / 2)   # 0 center .. 1 edge
+            x_hat = np.clip(1 - r, 0, 1)   # edge(r=1)->surface(0); center(r=0)->center(1)
+            c_pixel = np.interp(x_hat.ravel(), x_hat_grid, c_norm).reshape(img_res, img_res)
+            rgb = LOW_RGB + c_pixel[..., None] * (HIGH_RGB - LOW_RGB)
+            rgb = np.where(r[..., None] <= 1.0, rgb, BG_RGB)
+            return rgb.astype(np.uint8)
+
+        particle_img = always_redraw(
+            lambda: ImageMobject(particle_array(time_tracker.get_value()))
+            .set_resampling_algorithm(RESAMPLING_ALGORITHMS["linear"])
+            .scale_to_fit_width(2 * radius)
+            .move_to(circle_center)
+        )
+        particle_outline = Circle(radius=radius, color=OFFWHITE, stroke_width=2.5).move_to(circle_center)
+
+        left_caption = Text("Particle cross-section", font_size=18, color=GREY_TEXT)
+        left_caption.next_to(circle_center + UP * radius, UP, buff=0.25)
+        surface_label = Text("surface, charge enters here", font_size=15, color=GREY_TEXT)
+        surface_label.next_to(particle_outline, DOWN, buff=0.3)
+        center_label = Text("center", font_size=15, color=OFFWHITE)
+        center_label.move_to(circle_center + DOWN * 0.4)
+
+        # ---------------- right panel: concentration profile ----------------
+        axes = Axes(
+            x_range=[0, 1, 0.25], y_range=[c_min, c_max, (c_max - c_min) / 4],
+            x_length=5.4, y_length=4.3,
+            axis_config={"color": OFFWHITE, "stroke_width": 2, "include_tip": False, "include_ticks": False},
+        ).move_to([3.4, -0.5, 0])
+
+        right_caption = Text("Concentration profile", font_size=18, color=GREY_TEXT)
+        right_caption.next_to(axes, UP, buff=0.35)
+        x_left_label = Text("Surface", font_size=16, color=GREY_TEXT).next_to(axes.c2p(0, c_min), DOWN, buff=0.25)
+        x_right_label = Text("Center", font_size=16, color=GREY_TEXT).next_to(axes.c2p(1, c_min), DOWN, buff=0.25)
+        y_label = Text("Concentration", font_size=18, color=OFFWHITE).rotate(90 * DEGREES)
+        y_label.next_to(axes.y_axis, LEFT, buff=0.25)
+
+        curve = always_redraw(lambda: VMobject(color=KAN_ORANGE, stroke_width=4).set_points_smoothly(
+            [axes.c2p(xh, cv) for xh, cv in zip(x_hat_grid, c_at(time_tracker.get_value()))]
+        ))
+
+        clock = always_redraw(lambda: Text(
+            f"t = {time_tracker.get_value() * t_end / 60:.1f} min", font_size=24, color=OFFWHITE, weight=BOLD,
+        ).to_corner(UR, buff=0.5))
+
+        # ---------------- the marker tying curve position <-> radius ----------------
+        def marker_right_group():
+            xh = marker_x.get_value()
+            cv = float(np.interp(xh, x_hat_grid, c_at(time_tracker.get_value())))
+            line = DashedLine(axes.c2p(xh, c_min), axes.c2p(xh, cv), color=OFFWHITE,
+                              stroke_width=2, dash_length=0.08)
+            dot = Dot(axes.c2p(xh, cv), color=OFFWHITE, radius=0.07)
+            return VGroup(line, dot)
+
+        def marker_left_dot():
+            xh = marker_x.get_value()
+            pos = circle_center + LEFT * radius * (1 - xh)
+            return Dot(pos, color=OFFWHITE, radius=0.09, stroke_color=NEAR_BLACK, stroke_width=1.5)
+
+        marker_right_mob = always_redraw(marker_right_group)
+        marker_left_mob = always_redraw(marker_left_dot)
+
+        # ---------------- sequence ----------------
+        self.play(
+            FadeIn(particle_outline), FadeIn(particle_img),
+            FadeIn(left_caption), FadeIn(surface_label), FadeIn(center_label),
+            Create(axes), FadeIn(right_caption), FadeIn(x_left_label), FadeIn(x_right_label), FadeIn(y_label),
+            FadeIn(clock),
+            run_time=1.3,
+        )
+        self.add(curve, marker_right_mob, marker_left_mob)
+        self.play(FadeIn(curve), FadeIn(marker_right_mob), FadeIn(marker_left_mob), run_time=0.3)
+
+        # a full surface-to-center sweep, at t=0, to teach the correspondence
+        # between "position on the curve" and "radius in the particle" ...
+        self.play(marker_x.animate.set_value(1.0), run_time=1.2, rate_func=smooth)
+        # ... then settle to a resting position that stays visible as an
+        # anchor throughout the main event below.
+        self.play(marker_x.animate.set_value(0.35), run_time=0.4, rate_func=smooth)
+
+        # the main event: 0 -> 20 minutes, both panels driven by the same clock
+        self.play(time_tracker.animate.set_value(1.0), run_time=6.3, rate_func=linear)
+        self.wait(0.5)
+
+        caption = Text("The tilt in the curve IS the uneven filling of the particle.",
+                       font_size=22, color=OFFWHITE).to_edge(DOWN, buff=0.35)
+        self.play(FadeIn(caption, shift=UP * 0.2), run_time=0.6)
+        self.wait(0.4)

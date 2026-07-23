@@ -91,13 +91,15 @@ isn't a real bottleneck.
 
 ## Optional: video figures
 
-`media/1080p60/` holds three equation-free Manim animations (for a
-non-academic audience) built from these same results:
-`TrainingRace.mp4`, `CostVsAccuracy.mp4`, `RealityCheck.mp4`. Regenerating
+`media/1080p60/` holds four Manim animations built from these results:
+`TrainingRace.mp4`, `CostVsAccuracy.mp4`, `RealityCheck.mp4` (equation-free,
+for a non-academic audience) and `ParticleFilling.mp4` (the ground-truth
+physics itself -- no ML involved, straight from
+`generators/diffusion_1d/outputs/diffusion_1d_solution.npz`). Regenerating
 them needs a separate Manim installation (not in `requirements.txt` - it's
 a presentation tool, not part of the experiment's own reproducibility):
 
 ```bash
 python export_manim_data.py     # needs run.py's outputs + checkpoints
-manim -qh manim_figures.py TrainingRace CostVsAccuracy RealityCheck
+manim -qh manim_figures.py TrainingRace CostVsAccuracy RealityCheck ParticleFilling
 ```
