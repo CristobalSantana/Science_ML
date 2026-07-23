@@ -296,10 +296,28 @@ class ParticleFilling(Scene):
         )
         particle_outline = Circle(radius=radius, color=OFFWHITE, stroke_width=2.5).move_to(circle_center)
 
-        left_caption = Text("Particle cross-section", font_size=18, color=GREY_TEXT)
-        left_caption.next_to(circle_center + UP * radius, UP, buff=0.25)
-        surface_label = Text("surface, charge enters here", font_size=15, color=GREY_TEXT)
-        surface_label.next_to(particle_outline, DOWN, buff=0.3)
+        left_caption = Text(
+            "One electrode particle\n(a grain of solid material),\ncut in half",
+            font_size=16, color=GREY_TEXT, line_spacing=0.9,
+        )
+        left_caption.next_to(circle_center + UP * radius, UP, buff=0.2)
+
+        # an inward-pointing arrow at the edge, labeled, so the surface entry
+        # point is self-explanatory without needing prose underneath
+        entry_dir = np.array([-1.0, 0.0, 0.0])   # left edge, same axis the marker sweeps
+        entry_outer = circle_center + entry_dir * (radius + 0.9)
+        entry_inner = circle_center + entry_dir * (radius + 0.05)
+        entry_arrow = Arrow(entry_outer, entry_inner, color=OFFWHITE, stroke_width=3,
+                            max_tip_length_to_length_ratio=0.35, buff=0)
+        entry_label = Text("Li⁺ enters here", font_size=16, color=OFFWHITE)
+        entry_label.next_to(entry_outer, UP, buff=0.15)
+        # keep it on screen: the label is wider than the arrow it sits
+        # above, so centering it on entry_outer can push its left edge
+        # past the frame boundary -- nudge right if so.
+        safe_left_edge = -6.9
+        if entry_label.get_left()[0] < safe_left_edge:
+            entry_label.shift(RIGHT * (safe_left_edge - entry_label.get_left()[0]))
+
         center_label = Text("center", font_size=15, color=OFFWHITE)
         center_label.move_to(circle_center + DOWN * 0.4)
 
@@ -345,11 +363,12 @@ class ParticleFilling(Scene):
         # ---------------- sequence ----------------
         self.play(
             FadeIn(particle_outline), FadeIn(particle_img),
-            FadeIn(left_caption), FadeIn(surface_label), FadeIn(center_label),
+            FadeIn(left_caption), FadeIn(center_label),
             Create(axes), FadeIn(right_caption), FadeIn(x_left_label), FadeIn(x_right_label), FadeIn(y_label),
             FadeIn(clock),
             run_time=1.3,
         )
+        self.play(GrowArrow(entry_arrow), FadeIn(entry_label, shift=RIGHT * 0.15), run_time=0.6)
         self.add(curve, marker_right_mob, marker_left_mob)
         self.play(FadeIn(curve), FadeIn(marker_right_mob), FadeIn(marker_left_mob), run_time=0.3)
 
